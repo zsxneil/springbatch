@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bean:beans xmlns="http://www.springframework.org/schema/batch" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:bean="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-4.0.xsd  
+http://www.springframework.org/schema/aop 
+http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+http://www.springframework.org/schema/context 
+http://www.springframework.org/schema/context/spring-context-4.0.xsd
+http://www.springframework.org/schema/batch 
+http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+http://www.springframework.org/schema/util 
+http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+
+    <bean:import resource="spring.xml"/>
+
+    <job id="fixedlengthJob">
+        <step id="fixedlengthStep" >
+            <tasklet transaction-manager="transactionManager">
+            	<chunk reader="fixedlengthReader" writer="fixedlengthWriter" processor="fixedlengthProcessor" commit-interval="1">
+            		
+            	</chunk>
+            </tasklet>
+        </step>
+    </job>
+    
+	<bean:bean id="fixedlengthProcessor" class="com.my.springbatch.fixedlength.FixedLengthProcessor"/>
+    <!-- 读取文件 -->
+    <bean:bean id="fixedlengthReader" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+        <bean:property name="resource" value="classpath:#{jobParameters['inputFilePath']}" />
+        <bean:property name="lineMapper">
+            <bean:bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+                <bean:property name="lineTokenizer" ref="lineTokenizer" />
+                <bean:property name="fieldSetMapper">
+                   <bean:bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+                        <bean:property name="prototypeBeanName" value="studentBean"/>
+                    </bean:bean>
+               </bean:property>
+            </bean:bean>
+        </bean:property>
+    </bean:bean>
+
+    <bean:bean id="studentBean" class="com.my.springbatch.fixedlength.Student" scope="prototype" />
+    <!-- 写文件 -->
+    <bean:bean id="fixedlengthWriter"
+        class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+        <bean:property name="resource" value="file:#{jobParameters['outputFilePath']}"/>
+        <bean:property name="lineAggregator">
+            <bean:bean class="org.springframework.batch.item.file.transform.FormatterLineAggregator">
+                <bean:property name="fieldExtractor">
+                    <bean:bean
+                        class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+                        <bean:property name="names" value="ID,name,age,score"></bean:property>
+                    </bean:bean>
+                </bean:property>
+                <bean:property name="format" value="%-9s%-20s%-5s%-2.0f" /><!-- 输出的数据的格式，一般表示每列之间的space间隔 -->
+            </bean:bean>
+        </bean:property>
+    </bean:bean>
+    
+    <bean:bean id="lineTokenizer" class="org.springframework.batch.item.file.transform.FixedLengthTokenizer">
+        <bean:property name="columns" value="1-6,7-15,16-18,19-" /><!-- 数字为第几位，表示第几位到第几位与属性相对应，如200001zhangsan 17	78 是第1位到第6位对应ID，第7位到第15位对应name -->
+        <bean:property name="names" value="ID,name,age,score" />
+    </bean:bean>
+</bean:beans>

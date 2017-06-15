@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bean:beans xmlns="http://www.springframework.org/schema/batch"
+    xmlns:bean="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-4.0.xsd  
+http://www.springframework.org/schema/aop 
+http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+http://www.springframework.org/schema/context 
+http://www.springframework.org/schema/context/spring-context-4.0.xsd
+http://www.springframework.org/schema/batch 
+http://www.springframework.org/schema/batch/spring-batch-3.0.xsd">
+
+    <bean:import resource="spring.xml"/>
+
+    <job id="dbJob">
+        <step id="dbStep" >
+            <tasklet transaction-manager="transactionManager">
+            	<listeners>
+            		<listener ref="itemFailureLoggerListener"></listener>
+            	</listeners>
+            	<!-- commit-interval: 批量提交的条数; skip-limit: 指允许跳过记录数 -->
+            	<chunk reader="dbItemReader" writer="ledgerWriter" commit-interval="1000" skip-limit="1000">
+            		<skippable-exception-classes>
+            			<include class="java.lang.Exception"/> <!-- 出现exception或其子类, Job仍然会往后执行 -->
+            			<exclude class="java.io.FileNotFoundException"/> <!-- 出现这个异常, Job会立刻停止 -->
+            		</skippable-exception-classes>
+            	</chunk>
+            </tasklet>
+        </step>
+    </job>
+    
+
+    <!-- db reader-->
+    <bean:bean id="dbItemReader"
+        class="org.springframework.batch.item.database.JdbcCursorItemReader" scope="step">
+        <bean:property name="dataSource" ref="dataSource"/>
+        <bean:property name="sql" value="select * from t_ledger"/>
+        <bean:property name="rowMapper" ref="ledgerRowMapper"/>
+    </bean:bean>
+
+    
+    
+    
+    
+</bean:beans>

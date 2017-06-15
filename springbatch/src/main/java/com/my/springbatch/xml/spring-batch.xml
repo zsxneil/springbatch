@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bean:beans xmlns="http://www.springframework.org/schema/batch" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:bean="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-4.0.xsd  
+http://www.springframework.org/schema/aop 
+http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+http://www.springframework.org/schema/context 
+http://www.springframework.org/schema/context/spring-context-4.0.xsd
+http://www.springframework.org/schema/batch 
+http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+http://www.springframework.org/schema/util 
+http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+
+    <bean:import resource="spring.xml"/>
+
+    <job id="xmlJob">
+        <step id="xmlStep" >
+            <tasklet transaction-manager="transactionManager">
+            	<chunk reader="xmlReader" writer="xmlWriter" processor="xmlProcessor" commit-interval="10">
+            		
+            	</chunk>
+            </tasklet>
+        </step>
+    </job>
+    
+	<bean:bean id="xmlProcessor" class="com.my.springbatch.xml.XMLProcessor"/>
+    <!-- 读取xml文件 -->
+    <bean:bean id="xmlReader"
+        class="org.springframework.batch.item.xml.StaxEventItemReader" scope="step">
+        <bean:property name="resource" value="classpath:#{jobParameters['inputFilePath']}"/>
+        <bean:property name="fragmentRootElementName" value="goods"/>
+        <bean:property name="unmarshaller" ref="tradeMarshaller"/>
+    </bean:bean>
+
+    
+    <!-- 写xml文件 -->
+    <bean:bean id="xmlWriter"
+        class="org.springframework.batch.item.xml.StaxEventItemWriter" scope="step">
+        <bean:property name="resource" value="file:#{jobParameters['outputFilePath']}"/>
+        <bean:property name="marshaller" ref="tradeMarshaller"/>
+        <bean:property name="rootTagName" value="my" />
+    </bean:bean>
+    
+    <bean:bean id="tradeMarshaller"
+        class="org.springframework.oxm.xstream.XStreamMarshaller">
+        <bean:property name="aliases">
+           <util:map id="aliases">
+                 <bean:entry key="goods" value="com.my.springbatch.xml.Goods" />
+                 <bean:entry key="buyDay" value="java.util.Date"></bean:entry>
+           </util:map>
+         </bean:property>
+     </bean:bean>
+</bean:beans>

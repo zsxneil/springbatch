@@ -1,0 +1,8 @@
+student,20001,张三,18,90
+goodsPNH001011000200.1zhangsana2017/06/14 11:01:25
+student,20002,lily,19,95
+goodsPNH001022000300.1zhangsanb2017/06/14 11:02:25
+student,20003,Lucy,20,92
+goodsPNH001033000400.1zhangsanc2017/06/14 11:03:25
+student,20004,WangWu,22,91
+goodsPNH001054000500.1zhangsand2017/06/14 11:04:25
